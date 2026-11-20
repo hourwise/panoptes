@@ -1,0 +1,6 @@
+{"type":"session","id":"01a1dead-beef-4c01-8000-000000000002","timestamp":"2026-11-19T04:00:00.000Z"}
+{"type":"message","id":"m1","parentId":null,"timestamp":"2026-11-19T04:00:01.000Z","message":{"role":"user","content":[{"type":"text","text":"CANARY-DIRTY-PROMPT-DO-NOT-LEAK"}]}}
+{this line is not json at all
+{"type":"message","id":"m2","parentId":"m1","timestamp":"2026-11-19T04:00:02.000Z","message":{"role":"assistant","model":"flashnext","usage":{"input":42,"output":3,"cacheRead":8,"cacheWrite":0,"totalTokens":53,"reasoningTokens":1},"content":[{"type":"toolCall","id":"t1","name":"grep","arguments":{"pattern":"x"}}]}}
+also-not: [json, broken
+{"type":"message","id":"m3","parentId":"m2","timestamp":"2026-11-19T04:00:03.000Z","message":{"role":"assistant","model":"flashnext","usage":{"input":60,"output":4,"cacheRead":0,"cacheWrite":0,"totalTokens":64,"reasoningTokens":0},"content":[]}}

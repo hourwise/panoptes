@@ -1,0 +1,7 @@
+{"task": "T-002", "variant": "a", "run": 1, "schema": 1, "gate_pass": true, "wall_seconds": 40}
+{"task": "T-002", "variant": "a", "run": 2", "gate_pass":
+[1, 2, 3]
+{"task": "T-003"}
+{"variant": "a"}
+
+{"task": "T-001", "variant": "b", "run": 1, "schema": 1, "gate_pass": false, "wall_seconds": 42}

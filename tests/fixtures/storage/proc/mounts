@@ -1,0 +1,16 @@
+proc /proc proc rw,nosuid,nodev,noexec,relatime 0 0
+sysfs /sys sysfs rw,nosuid,nodev,noexec,relatime 0 0
+udev /dev devtmpfs rw,nosuid,relatime,size=61089036k,nr_inodes=15272259,mode=755,inode64 0 0
+tmpfs /run tmpfs rw,nosuid,nodev,mode=755,inode64 0 0
+/dev/nvme0n1p3 /mnt/fixture-root ext4 rw,relatime,errors=remount-ro 0 0
+/dev/nvme0n1p3 /mnt/fixture-home ext4 rw,relatime 0 0
+/dev/sda1 /mnt/fixture\040data ext4 rw,relatime 0 0
+/dev/nvme0n1p1 /mnt/fixture-efi vfat rw,relatime,fmask=0077,dmask=0077,codepage=437,iocharset=iso8859-1,shortname=mixed,errors=remount-ro 0 0
+/dev/mapper/vg0-srv /mnt/fixture-srv ext4 rw,relatime 0 0
+/dev/sdb1 /mnt/fixture-backup ntfs3 rw,relatime 0 0
+/dev/sdc1 /mnt/fixture-fuse fuseblk rw,nosuid,nodev,relatime,user_id=0,group_id=0,default_permissions,allow_other,blksize=4096 0 0
+/dev/loop0 /mnt/fixture-snap squashfs ro,nodev,relatime 0 0
+/dev/sr0 /mnt/fixture-cdrom iso9660 ro,noatime 0 0
+overlay /mnt/fixture-overlay overlay rw,relatime,lowerdir=/a,upperdir=/b,workdir=/c 0 0
+tmpfs /mnt/fixture-tmp tmpfs rw,nosuid,nodev,mode=755,inode64 0 0
+fuse.portal /mnt/fixture-docs fuse.portal rw,nosuid,nodev,relatime,user_id=1000,group_id=1000 0 0

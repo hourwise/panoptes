@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Panoptes
+Comment=AI workstation control centre
+Exec=@LAUNCH@
+Icon=@ICON@
+Terminal=false
+Categories=System;Monitor;
+StartupNotify=true

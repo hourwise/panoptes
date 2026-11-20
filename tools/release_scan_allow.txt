@@ -1,0 +1,40 @@
+# Intended exceptions for tools/release_scan.py — one per line:
+#   file:line-substring  # reason
+# A line is skipped when the substring appears on that line of that file. Every
+# entry needs a reason; an entry that matches nothing is reported as a problem,
+# so delete an entry once the line it names no longer needs it.
+
+# The scanner's own tests: one planted example per detector, which has to look
+# like the real thing for the test to prove anything.
+tests/test_release_scan.py:54-home.txt  # planted home path for the home-path detector
+tests/test_release_scan.py:56-lan.txt  # planted LAN name for the hostname detector
+tests/test_release_scan.py:57-mail.txt  # planted address for the email detector
+tests/test_release_scan.py:58-secret.txt  # planted assignment for the secret detector
+tests/test_release_scan.py:59-serial.txt  # planted serial for the serial detector
+
+# Redaction tests: the detector-under-test's own inputs have to look real.
+tests/test_reports.py:143-X-WSD-Token  # planted credential for the report redaction test
+tests/test_reports.py:144-password  # planted credential for the report redaction test
+tests/test_reports.py:183-api_key  # planted credential for the redaction count test
+tests/test_reports.py:210-api_key  # planted credential for the mode comparison test
+tests/test_reports.py:209-printed to  # planted LAN name for the host redaction test
+tests/test_reports.py:224-assertNotIn  # asserts the planted LAN name is redacted away
+tests/test_reports.py:235-assertIn  # asserts private mode keeps the planted LAN name
+
+# The pattern documentation names the shapes it matches, not a real machine.
+wsd/reports.py:87-printer  # comment documents the LAN-name redaction pattern
+
+# Fixture data copied from a real supervisor's records directory: the value
+# names where the row was backfilled from, which is the point of the row. The
+# files are test input under tests/fixtures, not product prose, and are outside
+# this packet's edit allow-list.
+tests/fixtures/jobs/records/perf/tasks.jsonl:2-backfill from  # fixture provenance value
+tests/fixtures/jobs/records/perf/tasks.jsonl:3-backfill from  # fixture provenance value
+tests/fixtures/jobs/records/perf/tasks.jsonl:4-backfill from  # fixture provenance value
+tests/fixtures/jobs/records/perf/tasks.jsonl:8-backfill from  # fixture provenance value
+tests/fixtures/jobs/records/reviews/T-001.md:4-T-001-fb-1.md  # fixture note naming its source
+
+# A docstring pointer to the Guardian service contract, kept in a module the
+# product ships. The file it names is private development material; the line is
+# outside this packet's edit allow-list, so it is listed here instead of reworded.
+wsd/config.py:28-GUARDIAN.md  # docstring cites the Guardian contract by section number

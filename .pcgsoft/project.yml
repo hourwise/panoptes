@@ -1,0 +1,33 @@
+# PCGsoft portfolio manifest — proposal data only.
+#
+# This file proposes project-owned metadata for the PCGsoft portfolio. It grants
+# nothing and publishes nothing: the canonical, human-approved record for this
+# project lives in PCGsoft's own site repository, and no field here overrides it.
+# Review it at milestones, releases and material capability or status changes,
+# never for routine commits — see docs/PROJECT_MANIFEST.md.
+#
+# Safe YAML subset only (the site's parser rejects anchors, tags, aliases and
+# multi-line values), schema version 2, ≤ 24 KB, and never a hostname, IP,
+# local path, username, credential, private repository detail, task content,
+# log or dashboard URL.
+schemaVersion: 2
+project:
+  slug: panoptes
+  name: Panoptes
+  category: open-source
+  status: active-development
+  statusLabel: Active development
+  summary: "A local, browser-based control centre for an AI workstation: live hardware and inference telemetry, engine profile switching with automatic rollback, AI-agent job history, and an experiment lab — standard-library Python, no build step, loopback-only by design."
+  parentProject: null
+  relatedProjects: []
+  lastReviewed: 2026-11-20
+repository:
+  role: primary
+web:
+  state: none
+  urls: []
+publication:
+  eligible: false
+  notes: Requires explicit PCGsoft review.
+activity:
+  enabled: false

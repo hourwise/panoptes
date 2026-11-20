@@ -1,0 +1,8 @@
+# anchors and aliases — line 3, alias on line 7
+memory:
+  gpu-headroom-mib: &room 1024
+  host-headroom-mib: *room
+
+models:
+  flashnext:
+    tp: 1

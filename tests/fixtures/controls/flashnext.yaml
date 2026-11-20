@@ -1,0 +1,27 @@
+server:
+  host: 0.0.0.0
+  port: 8000
+  live: true
+  log: info
+
+memory:
+  gpu-headroom-mib: 1024
+  host-headroom-mib: 8192
+
+models:
+  flashnext:
+    model: /models/qwen3.8-next-flash-iqr-v4.rad
+    tp: 1
+    placement: expert_tiered
+    host-pool-mib: 65536
+    ngram-placement: disk
+    weights-disk-tier: false
+    max-model-len: 65536
+    max-num-seqs: 1
+    max-num-batched-tokens: 2048
+    kv-cache-dtype: bf16
+    prefix-cache-mib: 4096
+    num-speculative-tokens: 5
+    draft-window: adaptive
+    mm-max-patches: 0
+    reasoning-effort: medium

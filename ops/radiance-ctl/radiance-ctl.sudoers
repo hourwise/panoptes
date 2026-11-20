@@ -1,0 +1,11 @@
+# /etc/sudoers.d/radiance-ctl — installed root:root 0440 by install.sh (validated with visudo first).
+# EDIT BEFORE INSTALLING: replace the placeholder user below with the login name of
+# the dashboard user. That user may run ONLY these exact radiance-ctl invocations
+# without a password. Any other argument, extra argument or command does not match
+# and falls back to normal sudo (password).
+Defaults!/usr/local/sbin/radiance-ctl env_reset
+YOUR_USER ALL=(root) NOPASSWD: /usr/local/sbin/radiance-ctl status, \
+                          /usr/local/sbin/radiance-ctl start, \
+                          /usr/local/sbin/radiance-ctl stop, \
+                          /usr/local/sbin/radiance-ctl restart, \
+                          /usr/local/sbin/radiance-ctl logs

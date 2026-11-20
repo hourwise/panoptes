@@ -1,0 +1,4 @@
+# a quote that never closes — line 3
+server:
+  log: "info
+  host: 0.0.0.0

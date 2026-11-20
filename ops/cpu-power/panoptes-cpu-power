@@ -1,0 +1,63 @@
+#!/usr/bin/python3 -I
+"""panoptes-cpu-power — publish coarse CPU power from RAPL for non-root readers.
+
+Installed root:root 0755 at /usr/local/libexec/panoptes-cpu-power and run by panoptes-cpu-power.service.
+
+Why: RAPL energy counters (/sys/class/powercap/intel-rapl:*/energy_uj) are root-only on purpose, because
+high-resolution reads enable power side-channel attacks (CVE-2020-8694, "Platypus"). This service keeps them
+root-only and publishes only a 1-second average rounded to whole watts, which is useful for energy-per-task
+accounting but far too coarse for that attack.
+
+Output: /run/panoptes/cpu-power.json, replaced atomically every second:
+  {"ts": 1795019530.0, "interval_s": 1.0, "package_w": 72, "core_w": 41, "source": "rapl"}
+Missing domains give null. Counter wrap-around is handled with max_energy_range_uj.
+"""
+import json
+import os
+import time
+
+DOMAINS = {"package_w": "/sys/class/powercap/intel-rapl:0", "core_w": "/sys/class/powercap/intel-rapl:0:0"}
+OUT_DIR = "/run/panoptes"
+OUT = os.path.join(OUT_DIR, "cpu-power.json")
+INTERVAL = 1.0
+
+
+def read_uj(path):
+    try:
+        with open(path) as f:
+            return int(f.read().strip())
+    except (OSError, ValueError):
+        return None
+
+
+def main():
+    os.makedirs(OUT_DIR, mode=0o755, exist_ok=True)
+    ranges = {k: read_uj(p + "/max_energy_range_uj") for k, p in DOMAINS.items()}
+    prev = {k: read_uj(p + "/energy_uj") for k, p in DOMAINS.items()}
+    prev_t = time.monotonic()
+    while True:
+        time.sleep(INTERVAL)
+        now = time.monotonic()
+        dt = now - prev_t
+        out = {"ts": round(time.time(), 1), "interval_s": round(dt, 2), "source": "rapl"}
+        for key, path in DOMAINS.items():
+            cur = read_uj(path + "/energy_uj")
+            p = prev.get(key)
+            if cur is None or p is None or dt <= 0:
+                out[key] = None
+            else:
+                delta = cur - p
+                if delta < 0 and ranges.get(key):
+                    delta += ranges[key]
+                out[key] = round(delta / 1e6 / dt) if delta >= 0 else None
+            prev[key] = cur
+        prev_t = now
+        tmp = OUT + ".tmp"
+        with open(tmp, "w") as f:
+            json.dump(out, f)
+        os.chmod(tmp, 0o644)
+        os.replace(tmp, OUT)
+
+
+if __name__ == "__main__":
+    main()

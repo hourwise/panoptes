@@ -1,0 +1,11 @@
+{
+  "object": "list",
+  "data": [
+    {
+      "id": "gemma-3-12b-it",
+      "object": "model",
+      "created": 1730000000,
+      "owned_by": "llama.cpp"
+    }
+  ]
+}

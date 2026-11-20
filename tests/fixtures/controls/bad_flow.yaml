@@ -1,0 +1,4 @@
+# flow style — line 4
+memory:
+  gpu-headroom-mib: 1024
+  tiers: [ssd, nvme]

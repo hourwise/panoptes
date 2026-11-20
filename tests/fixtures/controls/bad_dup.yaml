@@ -1,0 +1,5 @@
+# duplicate key at the same level — line 5
+memory:
+  gpu-headroom-mib: 1024
+  host-headroom-mib: 8192
+  gpu-headroom-mib: 2048

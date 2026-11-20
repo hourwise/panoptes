@@ -1,0 +1,42 @@
+# /etc/systemd/system/panoptes-cpu-power.service — installed by ops/cpu-power/install.sh
+# Publishes 1 s, whole-watt CPU package/core power to /run/panoptes/cpu-power.json (world-readable).
+# Runs as root only because RAPL counters are root-owned (0400); everything else is locked down.
+[Unit]
+Description=Panoptes CPU power publisher (coarse RAPL averages)
+After=local-fs.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/libexec/panoptes-cpu-power
+Restart=on-failure
+RestartSec=5
+RuntimeDirectory=panoptes
+RuntimeDirectoryMode=0755
+RuntimeDirectoryPreserve=no
+# Hardening: no capabilities, no network, read-only system, no home, no new privileges.
+CapabilityBoundingSet=
+AmbientCapabilities=
+NoNewPrivileges=yes
+PrivateNetwork=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+ProtectClock=yes
+ProtectHostname=yes
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=yes
+RestrictRealtime=yes
+RestrictSUIDSGID=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+SystemCallFilter=@system-service
+SystemCallFilter=~@privileged @resources
+UMask=0022
+
+[Install]
+WantedBy=multi-user.target

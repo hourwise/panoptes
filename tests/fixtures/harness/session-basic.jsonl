@@ -1,0 +1,10 @@
+{"type":"session","id":"01a1dead-beef-4c01-8000-000000000001","timestamp":"2026-11-19T03:00:00.000Z"}
+{"type":"title","title":"🛰️ CANARY-TITLE-DO-NOT-LEAK"}
+{"type":"model_change","id":"a1","parentId":null,"timestamp":"2026-11-19T03:00:00.200Z","model":"radiance/flashnext"}
+{"type":"custom","customType":"date-cwd-reminder","id":"a2","parentId":"a1","timestamp":"2026-11-19T03:00:00.300Z"}
+{"type":"message","id":"m1","parentId":"a2","timestamp":"2026-11-19T03:00:10.000Z","message":{"role":"user","content":[{"type":"text","text":"CANARY-USER-PROMPT-DO-NOT-LEAK"}]}}
+{"type":"message","id":"m2","parentId":"m1","timestamp":"2026-11-19T03:00:20.000Z","message":{"role":"assistant","model":"flashnext","usage":{"input":100,"output":10,"cacheRead":50,"cacheWrite":0,"totalTokens":165,"reasoningTokens":5},"content":[{"type":"thinking","thinking":"CANARY-REASONING-DO-NOT-LEAK"},{"type":"text","text":"CANARY-ASSISTANT-TEXT-DO-NOT-LEAK"},{"type":"toolCall","id":"t1","name":"bash","arguments":{"command":"CANARY-TOOL-ARG-DO-NOT-LEAK"}},{"type":"toolCall","id":"t2","name":"read","arguments":{"path":"secrets.env"}}]}}
+{"type":"compaction","id":"c1","parentId":"m2","timestamp":"2026-11-19T03:00:25.000Z","summary":"CANARY-COMPACTION-SUMMARY-DO-NOT-LEAK"}
+{"type":"message","id":"m3","parentId":"c1","timestamp":"2026-11-19T03:01:30.000Z","message":{"role":"assistant","model":"flashnext","usage":{"input":200,"output":12,"cacheRead":80,"cacheWrite":0,"totalTokens":295,"reasoningTokens":3},"content":[{"type":"toolCall","id":"t3","name":"bash","arguments":{"command":"ls"}}]}}
+{"type":"message","id":"m4","parentId":"m3","timestamp":"2026-11-19T03:05:30.000Z","message":{"role":"user","content":[{"type":"text","text":"and again"}]}}
+{"type":"message","id":"m5","parentId":"m4","timestamp":"2026-11-19T03:05:40.000Z","message":{"role":"assistant","model":"flashnext","usage":{"input":150,"output":20,"cacheRead":0,"cacheWrite":0,"totalTokens":170,"reasoningTokens":2},"content":[{"type":"text","text":"done"}]}}

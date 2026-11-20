@@ -1,0 +1,9 @@
+processor	: 0
+vendor_id	: AuthenticAMD
+cpu family	: 25
+model name	: AMD Fixture 2-Core Processor
+stepping	: 1
+
+processor	: 1
+vendor_id	: AuthenticAMD
+model name	: AMD Fixture 2-Core Processor

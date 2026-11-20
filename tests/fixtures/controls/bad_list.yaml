@@ -1,0 +1,6 @@
+# a list where a scalar belongs — line 5
+server:
+  port: 8000
+  log:
+    - info
+    - debug

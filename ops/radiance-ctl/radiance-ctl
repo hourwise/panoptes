@@ -1,0 +1,108 @@
+#!/bin/bash
+# radiance-ctl — narrowly scoped lifecycle control for ONE existing Docker container.
+#
+# Installed root:root 0755 at /usr/local/sbin/radiance-ctl by install.sh (never run from the repo).
+# Called through sudo by the dashboard user; sudoers allows exactly:
+#   radiance-ctl status | start | stop | restart | logs
+# There are no other arguments, no free-form input, and it never runs `docker run`, `exec`, `rm` or `pull`.
+#
+# Interlock: stop and restart are refused while
+#   - a supervised worker task is active (lock file written by the supervisor's dispatch script, owner process alive), or
+#   - Radiance reports running, waiting or in-flight requests.
+set -euo pipefail
+umask 077
+export PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export HOME=/root
+unset DOCKER_HOST DOCKER_CONTEXT DOCKER_CONFIG DOCKER_TLS_VERIFY DOCKER_CERT_PATH
+
+# ---------------------------------------------------------------------------
+# INSTALL-TIME SETTINGS: edit before installing; root reads nothing else.
+# This helper takes its machine values from these three lines and the sudoers
+# rule only: no configuration file, no environment variable, nothing else the
+# dashboard user could write. The values below are placeholders — edit them to
+# THIS machine before running install.sh; the installed copy at
+# /usr/local/sbin/radiance-ctl keeps whatever it was installed with, and this
+# repository copy is never executed. See ops/radiance-ctl/README.md.
+# ---------------------------------------------------------------------------
+# The one container this helper may ever act on.
+readonly CONTAINER="your-engine-container"
+# The only image it accepts: `docker inspect` must show the container running
+# an image whose name starts with this prefix, or every operation is refused.
+readonly IMAGE_PREFIX="your-org/your-engine:"
+# Absolute path of the supervised worker lock, owned by the dashboard user
+# (never root, never world-writable), written as "TASK START_EPOCH PID" by the
+# supervisor. stop and restart are refused while the recorded pid is alive.
+readonly WORKER_LOCK="/home/YOUR_USER/.local/state/lab01/worker-active"
+
+# Fixed by the design, not settings: the docker binary, the engine's loopback
+# stats endpoint, the audit log and the one-operation-at-a-time lock.
+readonly DOCKER="/usr/bin/docker"
+readonly STATS_URL="http://127.0.0.1:8000/stats"
+readonly AUDIT_LOG="/var/log/radiance-ctl.log"
+readonly OP_LOCK="/run/radiance-ctl.lock"
+
+audit() { printf '%s user=%s op=%s result=%s\n' "$(date -Is)" "${SUDO_USER:-root}" "$OP" "$1" >> "$AUDIT_LOG" 2>/dev/null || true; }
+fail()  { echo "{\"ok\": false, \"op\": \"$OP\", \"error\": \"$1\"}"; audit "refused:$1"; exit "${2:-1}"; }
+
+OP="${1:-}"
+[ "$#" -eq 1 ] || { OP="invalid"; fail "usage: radiance-ctl status|start|stop|restart|logs" 64; }
+case "$OP" in status|start|stop|restart|logs) ;; *) OP="invalid"; fail "unknown operation" 64 ;; esac
+
+# One lifecycle operation at a time.
+exec 9>"$OP_LOCK"
+flock -w 5 9 || fail "another radiance-ctl operation is running" 75
+
+# The container must exist and be the Radiance image; never act on anything else.
+IMAGE="$("$DOCKER" inspect --type container --format '{{.Config.Image}}' "$CONTAINER" 2>/dev/null)" \
+  || fail "container $CONTAINER not found" 69
+[[ "$IMAGE" == "$IMAGE_PREFIX"* ]] || fail "container image is not $IMAGE_PREFIX*" 69
+
+worker_active() {
+  [ -e "$WORKER_LOCK" ] || return 1
+  # A symlink, FIFO or anything but a regular file counts as active; never follow or block on it.
+  { [ -L "$WORKER_LOCK" ] || [ ! -f "$WORKER_LOCK" ]; } && return 0
+  local pid; pid="$(head -c 200 "$WORKER_LOCK" | awk '{print $3}' | tr -cd '0-9')"
+  [ -n "$pid" ] && kill -0 "$pid" 2>/dev/null
+}
+
+engine_busy() {
+  local body; body="$(curl -s -m 3 "$STATS_URL" 2>/dev/null)" || return 1   # unreachable = not serving
+  printf '%s' "$body" | /usr/bin/python3 -I -c '
+import json, sys
+try: s = json.load(sys.stdin)
+except Exception: sys.exit(1)
+busy = (s.get("running") or 0) + (s.get("waiting") or 0) + (s.get("in_flight") or 0)
+sys.exit(0 if busy > 0 else 1)'
+}
+
+guard_disruptive() {
+  worker_active && fail "a supervised worker task is active; wait for the task boundary" 75
+  engine_busy  && fail "Radiance has active or queued requests" 75
+  return 0
+}
+
+case "$OP" in
+  status)
+    "$DOCKER" inspect --type container --format \
+      '{"ok": true, "op": "status", "name": {{json .Name}}, "image": {{json .Config.Image}}, "state": {{json .State}}, "network_mode": {{json .HostConfig.NetworkMode}}, "ports": {{json .NetworkSettings.Ports}}, "restart_policy": {{json .HostConfig.RestartPolicy}}}' \
+      "$CONTAINER"
+    ;;
+  logs)
+    "$DOCKER" logs --tail 200 --timestamps "$CONTAINER" 2>&1
+    ;;
+  start)
+    "$DOCKER" start "$CONTAINER" >/dev/null
+    echo '{"ok": true, "op": "start"}'
+    ;;
+  stop)
+    guard_disruptive
+    "$DOCKER" stop --time 30 "$CONTAINER" >/dev/null
+    echo '{"ok": true, "op": "stop"}'
+    ;;
+  restart)
+    guard_disruptive
+    "$DOCKER" restart --time 30 "$CONTAINER" >/dev/null
+    echo '{"ok": true, "op": "restart"}'
+    ;;
+esac
+audit ok

@@ -1,0 +1,191 @@
+<!doctype html>
+<!-- Component-kit demo: every kit.js widget with fake data, nothing fetched.
+     Served at /static/demo.html by the dashboard server. -->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard UI kit · demo</title>
+<link rel="stylesheet" href="./ui/theme.css">
+</head>
+<body>
+<header>
+  <div>
+    <h1>Workstation Dashboard <span class="host">· UI kit demo</span></h1>
+    <div class="host">fixture data, no server calls — every widget from web/ui/kit.js</div>
+  </div>
+  <div class="spacer"></div>
+  <div class="lamp ok"><i></i><span>demo host</span></div>
+  <button id="theme">Light theme</button>
+</header>
+<main>
+
+  <section class="card span4">
+    <h2>Dials <span class="sub">normal · warn · hot · not exposed</span></h2>
+    <div class="dials" id="dials"></div>
+  </section>
+
+  <section class="card span5">
+    <h2>Sparklines <span class="sub">last 90 ticks, fake feed</span></h2>
+    <div class="row"><svg class="spark" viewBox="0 0 300 64" id="s-cpu"></svg></div>
+    <div class="spark-lbl"><span>CPU % · 5 min</span><span class="right" id="s-cpu-v">—</span></div>
+    <div class="row"><svg class="spark" viewBox="0 0 300 64" id="s-tok"></svg></div>
+    <div class="spark-lbl"><span>Generation tok/s</span><span class="right" id="s-tok-v">—</span></div>
+    <div class="row"><svg class="spark" viewBox="0 0 300 64" id="s-idle"></svg></div>
+    <div class="spark-lbl"><span>TTFT ms · no samples yet</span><span class="right">—</span></div>
+  </section>
+
+  <section class="card span3">
+    <h2>Segmented bars</h2>
+    <div id="b-ram"></div>
+    <div id="b-swap"></div>
+    <div id="b-vram"></div>
+    <div id="b-disk"></div>
+    <p class="note">Grey track is the available share; a bar with no segments at all means the
+      collector returned nothing.</p>
+  </section>
+
+  <section class="card span5">
+    <h2>Heat strip <span class="sub">per core, hover for the number</span></h2>
+    <div id="h-cores"></div>
+    <p class="note" id="h-note">32 cores · the last four have no scaling driver, so they stay grey.</p>
+  </section>
+
+  <section class="card span4">
+    <h2>Lamps <span class="sub">all five states</span></h2>
+    <div class="row"><div id="l-ok"></div><div id="l-busy"></div><div id="l-warn"></div></div>
+    <div class="row"><div id="l-error"></div><div id="l-off"></div></div>
+    <p class="note">Unknown states fall back to <code>off</code>; colour is never the only cue — the text carries the state too.</p>
+  </section>
+
+  <section class="card span3">
+    <h2>Progress ring <span class="sub">model loading</span></h2>
+    <div class="row"><div id="r-load"></div><dl class="kv"><div><dt>weights</dt><dd id="r-load-t">—</dd></div></dl></div>
+    <div class="row"><div id="r-half"></div><dl class="kv"><div><dt>fixed share</dt><dd>62 %</dd></div></dl></div>
+    <div class="row"><div id="r-none"></div><dl class="kv"><div><dt>no progress reported</dt><dd>—</dd></div></dl></div>
+  </section>
+
+  <section class="card span7">
+    <h2>PCIe path · GPU 0 <span class="badge ok">host link at max</span></h2>
+    <svg id="c-gpu0" style="width:100%;min-width:520px"></svg>
+    <p class="note">R9700 endpoint runs Gen5 x16; the host link tops out at Gen4 x16 because the root port is Gen4.</p>
+  </section>
+
+  <section class="card span5">
+    <h2>PCIe path · GPU 1 <span class="badge warn">host link below max</span></h2>
+    <svg id="c-gpu1" style="width:100%;min-width:400px"></svg>
+    <p class="note">Gen1 x4 host link where Gen4 x16 is available: drawn amber, with the usual downshift caveat.</p>
+    <p class="note">links may downshift when idle; check under load</p>
+  </section>
+
+</main>
+<script type="module">
+import { dial, sparkline, segBar, heatStrip, lamp, progressRing, pcieChain, themeToggle }
+  from "./ui/kit.js";
+
+const $ = (id) => document.getElementById(id);
+
+themeToggle($("theme"));
+
+/* dials — the four states a panel can be in */
+const dials = [
+  { value: 34, o: { label: "CPU load %", unit: "%", min: 0, max: 100, warn: 70, hot: 90 } },
+  { value: 78, o: { label: "GPU temp °C", unit: "°C", min: 20, max: 100, warn: 70, hot: 90 } },
+  { value: 94, o: { label: "Memory pressure", unit: "%", min: 0, max: 100, warn: 70, hot: 90 } },
+  { value: 12, o: { label: "Generation tok/s", unit: "tok/s", min: 0, max: 80, warn: 40, hot: 20, invert: true } },
+  { value: null, o: { label: "Board power", unit: "W", min: 0, max: 300, warn: 200, hot: 260 } },
+];
+for (const spec of dials) {
+  const box = document.createElement("div");
+  $("dials").appendChild(box);
+  dial(box, spec.o)(spec.value);
+}
+
+/* sparklines — a fake random walk pushed into the ring buffer */
+const cpu = sparkline($("s-cpu"), { max: 100, color: "--ok", points: 90 });
+const tok = sparkline($("s-tok"), { max: 60, color: "--info", points: 90 });
+const walk = (start, lo, hi) => {
+  let v = start;
+  return () => { v = Math.max(lo, Math.min(hi, v + (Math.random() - 0.5) * 14)); return v; };
+};
+const nextCpu = walk(30, 2, 98);
+const nextTok = walk(30, 4, 55);
+for (let i = 0; i < 60; i++) { cpu(nextCpu()); tok(nextTok()); }
+setInterval(() => {
+  const c = nextCpu();
+  const t = nextTok();
+  cpu(c);
+  tok(t);
+  $("s-cpu-v").textContent = `${c.toFixed(0)} %`;
+  $("s-tok-v").textContent = `${t.toFixed(1)} tok/s`;
+}, 900);
+sparkline($("s-idle"), { max: 2000, color: "--violet", points: 90 });
+
+/* segmented bars */
+segBar($("b-ram"), { label: "RAM", total: 64 })(
+  [{ value: 12.4, color: "var(--info)", name: "used" }, { value: 9.1, color: "var(--violet)", name: "cache" }],
+  "21.5 / 64 GB");
+segBar($("b-swap"), { label: "Swap", total: 16 })(
+  [{ value: 0.4, color: "var(--warn)", name: "used" }], "0.4 / 16 GB");
+segBar($("b-vram"), { label: "VRAM", total: 32 })(
+  [{ value: 26.1, color: "var(--violet)", name: "used" }], "26.1 / 32 GB");
+segBar($("b-disk"), { label: "Disk /", total: 100 })(
+  [{ value: 92, color: "var(--hot)", name: "used" }], "92 / 100 GB");
+
+/* heat strip — 32 cores, the last four are not exposed */
+const cores = heatStrip($("h-cores"), 32, { name: "cpu" });
+const coreValues = () => Array.from({ length: 32 }, (_, i) =>
+  i >= 28 ? null : Math.max(0, Math.min(100, 25 + Math.random() * 60 * (i % 5 === 0 ? 1.6 : 1))));
+cores(coreValues());
+setInterval(() => cores(coreValues()), 1200);
+
+/* lamps */
+lamp($("l-ok"))("ok", "Radiance ready");
+lamp($("l-busy"))("busy", "worker 2 / 3 busy");
+lamp($("l-warn"))("warn", "link below max");
+lamp($("l-error"))("error", "helper unreachable");
+lamp($("l-off"))("off", "stopped");
+
+/* progress rings */
+const loading = progressRing($("r-load"));
+let shown = 0;
+loading(shown);
+setInterval(() => {
+  shown = shown >= 1 ? 0 : Math.min(1, shown + 0.03);
+  loading(shown);
+  $("r-load-t").textContent = `${Math.round(shown * 100)} %`;
+}, 260);
+progressRing($("r-half"))(0.62);
+progressRing($("r-none"))(null);
+
+/* PCIe chains — the two fixtures this milestone is graded against */
+const gpu0 = {
+  gen: 4, width: 16, max_gen: 4, max_width: 16,
+  endpoint: { gen: 5, width: 16, max_gen: 5, max_width: 16 },
+  chain: [
+    { slot: "0000:9e:00.0", role: "endpoint", gen: 5, width: 16, max_gen: 5, max_width: 16 },
+    { slot: "0000:9d:00.0", role: "bridge", gen: 5, width: 16, max_gen: 5, max_width: 16 },
+    { slot: "0000:9c:00.0", role: "bridge", gen: 4, width: 16, max_gen: 5, max_width: 16 },
+    { slot: "0000:9b:01.1", role: "root_port", gen: 4, width: 16, max_gen: 4, max_width: 16 },
+  ],
+  host_link: { gen: 4, width: 16, max_gen: 4, max_width: 16 },
+  bottleneck: { gen: 4, width: 16, slot: "0000:9c:00.0" },
+  below_max: false, note: null,
+};
+const gpu1 = {
+  gen: 1, width: 4, max_gen: 4, max_width: 16,
+  endpoint: { gen: 5, width: 16, max_gen: 5, max_width: 16 },
+  chain: [
+    { slot: "0000:ac:00.0", role: "endpoint", gen: 5, width: 16, max_gen: 5, max_width: 16 },
+    { slot: "0000:ab:00.0", role: "bridge", gen: 1, width: 4, max_gen: 5, max_width: 16 },
+    { slot: "0000:aa:01.1", role: "root_port", gen: 1, width: 4, max_gen: 4, max_width: 16 },
+  ],
+  host_link: { gen: 1, width: 4, max_gen: 4, max_width: 16 },
+  bottleneck: { gen: 1, width: 4, slot: "0000:ab:00.0" },
+  below_max: true, note: "links may downshift when idle; check under load",
+};
+pcieChain($("c-gpu0"), gpu0, { name: "R9700 GPU" });
+pcieChain($("c-gpu1"), gpu1);
+</script>
+</body>
+</html>

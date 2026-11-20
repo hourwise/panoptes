@@ -1,0 +1,69 @@
+# Panoptes configuration — EXAMPLE.
+#
+# Copy this file to config/panoptes.toml and edit the copy; the server reads
+# $PANOPTES_CONFIG when set, otherwise config/panoptes.toml. Every value here is
+# a placeholder (/path/to/..., /home/YOUR_USER/...): leave it in place and the
+# matching path is reported as missing at start-up with a warning, and the tab
+# it belongs to simply shows nothing. Nothing here is a default to keep.
+#
+# No secrets: every engine is unauthenticated on loopback, so no credential
+# belongs in this file.
+
+# One [[engines]] entry per inference engine to watch.
+[[engines]]
+# Unique id, used in API paths and in the journal file names.
+id = "radiance-main"
+# Engine adapter: "radiance", "openai-compatible" or "llama.cpp".
+type = "radiance"
+# Base URL of the engine. The host MUST be loopback (localhost, 127.0.0.0/8 or
+# ::1); any other host is refused at load time and the engine skipped.
+base_url = "http://127.0.0.1:8000"
+# Name shown in the UI; defaults to the id when omitted.
+label = "Radiance · main GPU"
+# Directory the engine mounts its config profiles from (absolute, must exist).
+# Without it the Engines tab lists no profiles and cannot switch them.
+profiles_dir = "/path/to/engine/profiles"
+# The profile file the engine is running now: a *.yaml/*.yml name inside
+# profiles_dir, never a path.
+active_profile = "candidate-a.yaml"
+# Where switch journals and profile backups live (absolute; it need not exist
+# yet — the first switch creates it). Defaults to config-journal under
+# [records] dir; an engine with neither can list and diff profiles only.
+journal_dir = "/path/to/engine/config-journal"
+
+# A second engine, served by llama.cpp on another GPU.
+[[engines]]
+id = "llamacpp-second"
+type = "llama.cpp"
+base_url = "http://127.0.0.1:8001"
+label = "llama.cpp · second GPU"
+
+# One [[harnesses]] entry per agent harness whose live activity to show.
+[[harnesses]]
+# Unique id for this harness.
+id = "omp-local"
+# Harness adapter; "omp" is the only one today.
+type = "omp"
+# Name shown in the UI; defaults to the id when omitted.
+label = "OMP · local profile"
+# Absolute directory of session *.jsonl files. Panoptes reads only counts
+# (tokens, tool names, timestamps) from the newest file, never message text.
+# It must exist, or this entry is skipped with a warning.
+sessions_dir = "/home/YOUR_USER/.local/share/harness/sessions"
+# Small file the supervisor writes as "TASK START_EPOCH PID" while a task runs;
+# it drives the working/idle lamp and the stop/restart interlock. Absolute; the
+# file itself comes and goes with each task.
+lock_file = "/home/YOUR_USER/.local/state/harness/worker-active"
+
+# Where the supervisor keeps its job records (read-only for Panoptes).
+[records]
+# Absolute directory holding tasks/ packets, reviews/ and perf/tasks.jsonl.
+dir = "/path/to/supervisor/records"
+
+# The optional Guardian service's state file, shown as the header chip.
+[guardian]
+# Absolute path the Guardian service writes every couple of seconds. It must
+# NOT exist for this to be valid — until the service runs the chip honestly
+# says "not installed". Omit it to use $XDG_STATE_HOME (or ~/.local/state)
+# under panoptes/guardian/state.json.
+state_file = "/home/YOUR_USER/.local/state/panoptes/guardian/state.json"

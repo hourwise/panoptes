@@ -1,0 +1,3 @@
+# indentation that is not a multiple of two — line 3
+server:
+   port: 8000

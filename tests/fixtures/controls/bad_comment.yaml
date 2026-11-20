@@ -1,0 +1,3 @@
+# a trailing comment — line 3
+server:
+  port: 8000 # the listening port

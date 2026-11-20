@@ -1,0 +1,270 @@
+<!doctype html>
+<!-- Live system overview. Real data, fetched by web/app.js; widgets from web/ui/kit.js. -->
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="wsd-token" content="{{WSD_TOKEN}}">
+<title>Panoptes · Hardware</title>
+<link rel="stylesheet" href="/static/ui/theme.css">
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="wordmark">PANOPTES</div>
+    <div class="tagline">AI WORKSTATION CONTROL CENTRE</div>
+  </div>
+  <div class="spacer"></div>
+  <div id="guardian-chip" class="lamp gchip" role="status"></div>
+  <div id="api-lamp"></div>
+  <div class="host" id="verline">connecting…</div>
+  <div class="host" id="upline"></div>
+  <button id="theme">Light theme</button>
+</header>
+<nav class="tabs" role="tablist" aria-label="Sections">
+  <button class="tab" id="tab-hardware" role="tab" data-tab="hardware" aria-selected="true"  aria-controls="page-hardware">Hardware</button>
+  <button class="tab" id="tab-inference" role="tab" data-tab="inference" aria-selected="false" aria-controls="page-inference">Inference</button>
+  <button class="tab" id="tab-engines"   role="tab" data-tab="engines"   aria-selected="false" aria-controls="page-engines">Engines</button>
+  <button class="tab" id="tab-agents"    role="tab" data-tab="agents"    aria-selected="false" aria-controls="page-agents">Agents</button>
+  <button class="tab" id="tab-lab"       role="tab" data-tab="lab"       aria-selected="false" aria-controls="page-lab">Lab</button>
+  <button class="tab" id="tab-control"   role="tab" data-tab="control"   aria-selected="false" aria-controls="page-control">Control</button>
+</nav>
+<main>
+
+  <section class="tab-page" id="grid" data-tab="hardware" role="tabpanel" aria-labelledby="tab-hardware">
+
+  <section class="card span4">
+    <h2>CPU <span class="sub" id="cpu-cores">…</span></h2>
+    <div class="dials" id="cpu-dials"></div>
+    <div id="cpu-heat"></div>
+    <div class="row"><svg id="cpu-spark"></svg></div>
+    <div class="spark-lbl"><span>CPU % · last 3 min</span><span class="right" id="cpu-spark-v">—</span></div>
+  </section>
+
+  <section class="card span4">
+    <h2>Memory <span class="sub" id="mem-total"></span></h2>
+    <div class="dials" id="mem-dials"></div>
+    <div id="mem-bars"></div>
+    <div class="row"><svg id="mem-spark"></svg></div>
+    <div class="spark-lbl"><span>RAM available GB · last 3 min</span><span class="right" id="mem-spark-v">—</span></div>
+  </section>
+
+  <section class="card span4" id="storage-card">
+    <h2>Storage <span class="sub" id="io-rate"></span></h2>
+    <div id="fs-bars"></div>
+    <div class="row"><svg id="io-spark"></svg></div>
+    <div class="spark-lbl"><span>Disk read + write MB/s · last 10 min</span><span class="right" id="io-spark-v">—</span></div>
+  </section>
+
+  </section>
+
+  <section class="tab-page" id="page-inference" data-tab="inference" role="tabpanel" aria-labelledby="tab-inference" hidden>
+
+  <section class="card span4">
+    <h2>Engine <span class="sub" id="inf-model-state"></span></h2>
+    <div class="row"><div id="inf-lamp"></div></div>
+    <div class="row" id="inf-loading" hidden>
+      <div id="inf-ring"></div>
+      <span class="note" style="margin-top:0">loading — progress not exposed by engine</span>
+    </div>
+    <dl class="kv" id="inf-engine-kv">
+      <div><dt>uptime</dt><dd id="inf-uptime">—</dd></div>
+      <div><dt>model VRAM</dt><dd id="inf-vram">—</dd></div>
+      <div><dt>load seconds</dt><dd id="inf-load">—</dd></div>
+      <div><dt>queue</dt><dd id="inf-queue">—</dd></div>
+      <div><dt>max_num_seqs</dt><dd id="inf-maxseqs">—</dd></div>
+    </dl>
+  </section>
+
+  <section class="card span8">
+    <h2>Performance</h2>
+    <div class="dials" id="inf-dials"></div>
+    <div class="row"><svg id="inf-gen-spark"></svg></div>
+    <div class="spark-lbl"><span>generation tok/s · non-zero samples only</span><span class="right" id="inf-gen-v">—</span></div>
+    <div class="row"><svg id="inf-pre-spark"></svg></div>
+    <div class="spark-lbl"><span>prefill tok/s · non-zero samples only</span><span class="right" id="inf-pre-v">—</span></div>
+  </section>
+
+  <section class="card span5">
+    <h2>Latency <span class="sub">since engine start</span></h2>
+    <div id="inf-latency"></div>
+    <p class="note">Lifetime histograms since engine start. Bar = p50 + (p95 − p50), all four bars share the largest p95 as full width.</p>
+  </section>
+
+  <section class="card span7">
+    <h2>Active requests <span class="right" id="inf-req-count"></span></h2>
+    <div id="inf-reqs"></div>
+    <p class="note">ctx bar = context tokens of max_model_len.</p>
+  </section>
+
+  <section class="card span4">
+    <h2>Speculative decoding <span class="right" id="inf-spec-depth"></span></h2>
+    <div id="inf-spec"></div>
+  </section>
+
+  <section class="card span4">
+    <h2>Host ↔ GPU traffic</h2>
+    <dl class="kv">
+      <div><dt>h2d</dt><dd id="inf-h2d">—</dd></div>
+      <div><dt>d2h</dt><dd id="inf-d2h">—</dd></div>
+    </dl>
+    <div class="row"><svg id="inf-h2d-spark"></svg></div>
+    <div class="spark-lbl"><span>h2d MB/s · expert streaming</span><span class="right" id="inf-h2d-v">—</span></div>
+    <div id="inf-tiers"></div>
+    <p class="note">tier meaning as reported by Radiance</p>
+  </section>
+
+  <section class="card span4">
+    <h2>Warnings <span class="right" id="inf-warn-count"></span></h2>
+    <div id="inf-warnings"></div>
+  </section>
+
+  </section>
+
+  <section class="tab-page" id="page-engines" data-tab="engines" role="tabpanel" aria-labelledby="tab-engines" hidden>
+  </section>
+
+  <section class="tab-page" id="page-agents" data-tab="agents" role="tabpanel" aria-labelledby="tab-agents" hidden>
+
+  <section class="card span12">
+    <h2>Panoptes Agents <span class="sub" id="ag-count"></span></h2>
+    <div class="ag-stats" id="ag-stats"></div>
+    <div id="ag-warnings" hidden></div>
+  </section>
+
+  <section class="card span12">
+    <h2>Job history <span class="right" id="ag-filter-note"></span></h2>
+    <div class="ag-filters">
+      <label>Milestone <select id="ag-f-milestone"></select></label>
+      <label>Outcome <select id="ag-f-outcome"></select></label>
+      <label class="ag-check"><input type="checkbox" id="ag-f-first"> first time only</label>
+      <label class="ag-export-mode">Report
+        <select id="ag-export-mode" aria-label="Report mode">
+          <option value="shareable" selected>Shareable</option>
+          <option value="private">Private</option>
+        </select>
+      </label>
+      <a id="ag-export-set" class="ag-export-btn" hidden>Export jobs (.md)</a>
+    </div>
+    <div class="ag-wrap">
+      <table class="ag-table">
+        <thead><tr>
+          <th>id</th><th>title</th><th>milestone</th><th>outcome</th><th>rounds</th>
+          <th>worker time</th><th>energy</th><th>tok/s</th><th>peak ctx</th>
+        </tr></thead>
+        <tbody id="ag-rows"></tbody>
+      </table>
+    </div>
+    <p class="note" id="ag-empty" hidden></p>
+    <div class="ag-detail" id="ag-detail" hidden>
+      <h3 id="ag-detail-title"></h3>
+      <dl class="kv" id="ag-detail-job"></dl>
+      <h3 id="ag-detail-engine-h" hidden>Engine lifetime at review time (not per job)</h3>
+      <dl class="kv" id="ag-detail-engine"></dl>
+      <pre class="ag-review" id="ag-detail-review"></pre>
+    </div>
+  </section>
+
+  </section>
+
+  <section class="tab-page" id="page-lab" data-tab="lab" role="tabpanel" aria-labelledby="tab-lab" hidden>
+
+  <section class="card span12">
+    <h2>Panoptes Lab <span class="sub" id="lab-count"></span></h2>
+    <div class="ag-filters">
+      <label>Baseline <select id="lab-baseline"></select></label>
+      <label>Modified <select id="lab-modified"></select></label>
+      <label class="ag-export-mode">Report
+        <select id="lab-export-mode" aria-label="Report mode">
+          <option value="shareable" selected>Shareable</option>
+          <option value="private">Private</option>
+        </select>
+      </label>
+      <a id="lab-export" class="ag-export-btn is-disabled" aria-disabled="true">Export comparison (.md)</a>
+    </div>
+    <p class="note" id="lab-empty" hidden></p>
+    <p class="note" id="lab-same" hidden>Pick two different variants to compare.</p>
+    <div id="lab-warnings" hidden></div>
+    <div id="lab-compare" hidden>
+      <p class="note" id="lab-meta"></p>
+      <p class="note">Per benchmark run (job-scoped), not engine-lifetime.</p>
+      <div class="ag-wrap">
+        <table class="ag-table">
+          <thead><tr>
+            <th>Measurement</th><th id="lab-th-base">Baseline</th><th id="lab-th-mod">Modified</th><th>Difference</th>
+          </tr></thead>
+          <tbody id="lab-rows"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section class="card span12" id="lab-trends-card">
+    <h2>Trends <span class="sub" id="lab-trends-count"></span></h2>
+    <p class="note" id="lab-trends-summary"></p>
+    <p class="note" id="lab-trends-empty" hidden></p>
+    <div id="lab-trends-warnings" hidden></div>
+    <div id="lab-trends-charts" hidden></div>
+    <p class="note">Accepted tasks in acceptance order, one slot per task; the dashed lines are the applied
+      profile switches, drawn at the first task accepted after each one. Solid dot = measured, hollow = partial
+      or unavailable (never drawn at zero), amber = not accepted first time, grey dashed line = median of the
+      values in the last 5 task slots. Hover or tab to a point for its value and provenance.</p>
+  </section>
+
+  </section>
+
+  <section class="tab-page" data-tab="control" role="tabpanel" aria-labelledby="tab-control" hidden>
+    <section class="card span5">
+      <h2>Container <span class="sub" id="ctl-name">&nbsp;</span>
+        <span class="badge info" id="ctl-dryrun-badge" hidden>dry run</span></h2>
+      <div class="row"><div id="ctl-lamp"></div></div>
+      <dl class="kv" style="margin-top:10px">
+        <div><dt>image</dt><dd id="ctl-image">&mdash;</dd></div>
+        <div><dt>started at</dt><dd id="ctl-started">&mdash;</dd></div>
+        <div><dt>uptime</dt><dd id="ctl-uptime">&mdash;</dd></div>
+        <div><dt>ports</dt><dd id="ctl-ports">&mdash;</dd></div>
+        <div><dt>network</dt><dd id="ctl-network">&mdash;</dd></div>
+        <div><dt>restart policy</dt><dd id="ctl-restart-policy">&mdash;</dd></div>
+      </dl>
+    </section>
+
+    <section class="card span7">
+      <h2>Lifecycle <span class="right note">every action needs an explicit confirm</span></h2>
+      <p class="warn-note" id="ctl-worker-note" hidden>A supervised worker task is running: Stop and Restart are locked</p>
+      <div class="row">
+        <button id="ctl-start">Start</button>
+        <button id="ctl-stop">Stop</button>
+        <button id="ctl-restart">Restart</button>
+      </div>
+      <div class="confirm-step" id="ctl-confirm" hidden>
+        <p id="ctl-confirm-text"></p>
+        <div class="row">
+          <button id="ctl-confirm-yes">Confirm</button>
+          <button id="ctl-confirm-no">Cancel</button>
+        </div>
+      </div>
+      <p class="op-result" id="ctl-result" hidden></p>
+      <div class="row" id="ctl-progress" hidden>
+        <div id="ctl-ring"></div>
+        <span class="note" id="ctl-progress-text" style="margin-top:0"></span>
+      </div>
+    </section>
+
+    <section class="card span12">
+      <h2>Container logs <span class="sub">last 200 lines of the helper log</span>
+        <span class="right"><button id="ctl-logs-refresh">Refresh</button></span></h2>
+      <pre class="logbox" id="ctl-logs">no logs loaded yet</pre>
+    </section>
+  </section>
+
+</main>
+<script type="module" src="/static/app.js"></script>
+<script type="module" src="/static/inference.js"></script>
+<script type="module" src="/static/control.js"></script>
+<script type="module" src="/static/engines.js"></script>
+<script type="module" src="/static/lab.js"></script>
+<script type="module" src="/static/agents.js"></script>
+<script type="module" src="/static/lab-trends.js"></script>
+<script type="module" src="/static/guardian-chip.js"></script>
+</body>
+</html>
